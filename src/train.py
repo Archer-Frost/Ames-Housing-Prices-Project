@@ -12,6 +12,11 @@ from xgboost import XGBRegressor
 from preprocessing import preprocessor
 from feature_engineering import AmesFeatureEngineer
 
+import random
+
+random.seed(42)
+np.random.seed(42)
+
 
 def main():
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,13 +54,15 @@ def main():
         ("xgb", xgb_model),
     ])
 
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
     stack = StackingRegressor(
         estimators=[
             ("xgb", xgb_pipe),
             ("lasso", lasso_pipe)
         ],
         final_estimator=Ridge(alpha=1.0),
-        cv=5,
+        cv=kf,
         n_jobs=-1,
     )
 
@@ -63,7 +70,7 @@ def main():
         stack,
         X_train,
         Y_train,
-        cv=5,
+        cv=kf,
         scoring="neg_root_mean_squared_error",
         n_jobs=-1,
     )
